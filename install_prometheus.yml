@@ -1,0 +1,198 @@
+---
+- name: check postfix status
+  hosts: office
+  become: yes
+
+  vars:
+    source_folder: ./src
+    tmp_folder: /tmp
+    prometheus_archive: prometheus-2.31.1.linux-amd64.tar.gz
+    nodeexporter_archive: node_exporter-1.2.2.linux-amd64.tar.gz
+    prometheus_service: prometheus.service
+    node_exporter_service: node_exporter.service
+
+  tasks:    
+  - name: Create user prometheus
+    shell: useradd --no-create-home --home-dir / --shell /bin/false prometheus
+    failed_when: false
+    no_log: True
+
+  - name: Copy prometheus tar
+    copy:
+      src: "{{ source_folder }}/{{ prometheus_archive }}"
+      dest: "{{ tmp_folder }}/{{ prometheus_archive }}"
+      mode: 0644
+
+  - name: Copy prometheus service
+    copy:
+      src: "{{ source_folder }}/{{ prometheus_service }}"
+      dest: "/etc/systemd/system/{{ prometheus_service }}"
+      mode: 0644
+      owner: prometheus
+      group: prometheus
+
+  - name: Create tmp prometheus directory 
+    ansible.builtin.file:
+      path: "{{ tmp_folder }}/prometheus"
+      state: directory
+      owner: prometheus
+      group: prometheus
+      mode: '0744'
+
+
+  - name: Extract prometheus 
+    ansible.builtin.unarchive:
+      src: "{{ tmp_folder }}/{{ prometheus_archive }}"
+      dest: "{{ tmp_folder }}/prometheus"
+      extra_opts: [--strip-components=1]      
+      remote_src: yes
+
+  - name: Copy prometheus file prometheus
+    ansible.builtin.copy:
+      src: "{{ tmp_folder }}/prometheus/prometheus"
+      dest: /usr/local/bin
+      mode: '0755'
+      owner: prometheus
+      group: prometheus
+      remote_src: yes
+
+  - name: Copy prometheus file promtool
+    ansible.builtin.copy:
+      src: "{{ tmp_folder }}/prometheus/promtool"
+      dest: /usr/local/bin
+      mode: '0755'
+      owner: prometheus
+      group: prometheus
+      remote_src: yes
+
+  - name: Create a prometheus directory 
+    ansible.builtin.file:
+      path: /etc/prometheus
+      state: directory
+      owner: prometheus
+      group: prometheus
+      mode: '0744'
+
+  - name: Create a /var/lib/prometheus directory 
+    ansible.builtin.file:
+      path: /var/lib/prometheus
+      state: directory
+      mode: '0744'
+      owner: prometheus
+      group: prometheus
+
+
+  - name: Copy prometheus.yml file 
+    ansible.builtin.copy:
+      src: "{{ tmp_folder }}/prometheus/prometheus.yml"
+      dest: /etc/prometheus
+      owner: prometheus
+      group: prometheus
+      mode: '0644'      
+      remote_src: yes
+
+  - name: Copy console_libraries dir
+    ansible.builtin.copy:
+      src: "{{ tmp_folder }}/prometheus/console_libraries"
+      dest: /etc/prometheus
+      owner: prometheus
+      group: prometheus
+      mode: '0644'      
+      remote_src: yes
+      directory_mode: yes
+
+  - name: Copy console_libraries dir
+    ansible.builtin.copy:
+      src: "{{ tmp_folder }}/prometheus/consoles"
+      dest: /etc/prometheus
+      owner: prometheus
+      group: prometheus
+      mode: '0644'      
+      remote_src: yes
+      directory_mode: yes
+
+  - name: Remove file (prometheus.tar.gz)
+    ansible.builtin.file:
+      path: "{{ tmp_folder }}/{{ prometheus_archive }}"
+      state: absent      
+
+  - name: Remove tm dir prometheus
+    ansible.builtin.file:
+      path: "{{ tmp_folder }}/prometheus"
+      state: absent      
+
+  - name: daemon reload
+    ansible.builtin.systemd:
+      daemon_reload: yes
+
+  - name: Start prometheus.service
+    shell: systemctl restart prometheus.service
+  
+  # Install node exporter
+  - name: Create user nodeusr
+    shell: useradd --no-create-home --home-dir / --shell /bin/false nodeusr
+    failed_when: false
+    no_log: True
+
+  - name: Copy node_exporter tar
+    copy:
+      src: "{{ source_folder }}/{{ nodeexporter_archive }}"
+      dest: "{{ tmp_folder }}/{{ nodeexporter_archive }}"
+      mode: 0644
+
+  - name: Copy node_exporter service
+    copy:
+      src: "{{ source_folder }}/{{ node_exporter_service }}"
+      dest: "/etc/systemd/system/{{ node_exporter_service }}"
+      mode: 0644
+      owner: nodeusr
+      group: nodeusr
+
+  - name: Create tmp node_exporter directory 
+    ansible.builtin.file:
+      path: "{{ tmp_folder }}/node_exporter"
+      state: directory
+      owner: nodeusr
+      group: nodeusr
+      mode: '0744'
+
+
+  - name: Extract node_exporter
+    ansible.builtin.unarchive:
+      src: "{{ tmp_folder }}/{{ nodeexporter_archive }}"
+      dest: "{{ tmp_folder }}/node_exporter"
+      extra_opts: [--strip-components=1]
+      remote_src: yes
+
+  - name: Copy node_exporter dir
+    ansible.builtin.copy:
+      src: "{{ tmp_folder }}/node_exporter/node_exporter"
+      dest: /usr/local/bin/
+      owner: nodeusr
+      group: nodeusr
+      mode: '0744'      
+      remote_src: yes
+      directory_mode: yes
+
+  - name: daemon reload
+    ansible.builtin.systemd:
+      daemon_reload: yes
+
+  - name: Restart node_exporter.service
+    ansible.builtin.service:
+      name: node_exporter.service
+      state: restarted
+      enabled: yes
+
+  # - name: Start node_exporter.service
+  #   shell: systemctl restart node_exporter.service
+
+  - name: Remove file (nodeexporter_archive)
+    ansible.builtin.file:
+      path: "{{ tmp_folder }}/{{ nodeexporter_archive }}"
+      state: absent      
+
+  - name: Remove tm dir nodeexporter_archive
+    ansible.builtin.file:
+      path: "{{ tmp_folder }}/node_exporter"
+      state: absent      

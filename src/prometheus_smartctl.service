@@ -1,0 +1,10 @@
+[Unit]
+Description=Export smartctl metrics to Prometheus Node Exporter
+
+[Service]
+Type=oneshot
+ExecStart=bash -c ' /usr/bin/python3 /usr/local/sbin/prometheus_smartctl.py > /var/state/prometheus/smartctl.prom'
+ProtectSystem=strict
+ReadWritePaths=/var/state/prometheus
+PrivateTmp=true
+ProtectHome=tmpfs

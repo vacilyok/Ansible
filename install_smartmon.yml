@@ -1,0 +1,69 @@
+# Предварительно Требуется установка службы  node_exporter
+---
+- name: check postfix status
+  hosts: office
+  become: yes
+
+  vars:
+    source_folder: ./src
+    smartctl_service: prometheus_smartctl.service
+    smartctl_timer: prometheus_smartctl.timer
+    smartctl_script: prometheus_smartctl.py
+
+  tasks:    
+  - name: Install smartmontools
+    apt:
+      name: smartmontools
+      state: present
+
+  - name: Create dir for smartctl data
+    ansible.builtin.file:
+      path: "/var/state/prometheus"
+      state: directory
+      owner: nodeusr
+      group: nodeusr
+      mode: '0744'
+
+  - name: Copy  smartctl service
+    copy:
+      src: "{{ source_folder }}/{{ smartctl_service }}"
+      dest: "/etc/systemd/system/{{ smartctl_service }}"
+      mode: 0644
+      owner: nodeusr
+      group: nodeusr
+
+  - name: Copy  smartctl timer
+    copy:
+      src: "{{ source_folder }}/{{ smartctl_timer }}"
+      dest: "/etc/systemd/system/{{ smartctl_timer }}"
+      mode: 0644
+      owner: nodeusr
+      group: nodeusr
+
+  - name: Copy  smartctl script
+    copy:
+      src: "{{ source_folder }}/{{ smartctl_script }}"
+      dest: "/usr/local/sbin/{{ smartctl_script }}"
+      mode: 0755
+      owner: nodeusr
+      group: nodeusr
+
+  - name: Correct node_exporter service
+    ansible.builtin.lineinfile:
+      path: /etc/systemd/system/node_exporter.service
+      regexp: '^ExecStart='
+      insertafter: '^#ExecStart='
+      line: ExecStart=/usr/local/bin/node_exporter --collector.textfile.directory=/var/state/prometheus
+
+  - name: daemon reload
+    ansible.builtin.systemd:
+      daemon_reload: yes
+
+  - name: Restart node_exporter.service
+    ansible.builtin.service:
+      name: node_exporter.service
+      state: restarted
+      enabled: yes
+
+  - name: Start prometheus.service
+    shell: systemctl restart prometheus_smartctl.timer
