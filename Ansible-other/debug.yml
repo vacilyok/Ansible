@@ -1,0 +1,13 @@
+---
+- name: Test register var
+  hosts: web_update
+  become: True
+
+  tasks:
+  - name: Register user group
+    command: "id -Gn"
+    register: user_groups
+  - debug:
+     var=user_groups
+  - debug:
+     msg = "{{owner}}"

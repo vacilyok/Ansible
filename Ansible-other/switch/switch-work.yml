@@ -1,0 +1,21 @@
+---
+- name: Backup Switch config
+  hosts: all
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+  - ios_command:
+      commands:
+        - command: "copy running-config tftp: //192.168.31.119/ur31.cfg"
+          check_all: True
+          prompt:
+            - "Address of remote host [192.168.31.119]?"
+            - "Destination filename [ur31.cfg]?"
+          answer:
+            - " "
+            - " "
+    register: results
+
+  - debug:
+      msg: "Result  {{results}}"

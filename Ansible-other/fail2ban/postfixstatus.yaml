@@ -1,0 +1,111 @@
+---
+- name: check postfix status
+  hosts: test
+  become: yes
+
+  vars:
+    source_folder: ./src
+    destin_folder: /etc/postfix
+    stat: stopped
+    email: "admin@ks.rniirs.ru"
+
+
+
+  tasks:
+
+  - name: Check postfix status
+    service_facts:
+
+  - name: Gather the packager facts
+    package_facts:
+
+
+  - name: Install mailx
+    yum:
+      name: mailx
+      state: latest
+
+
+  - name: Install cyrus-sasl-plain
+    yum:
+      name: cyrus-sasl-plain
+      state: latest
+
+  - name: postfix  install
+    yum:
+      name: postfix
+      state: latest
+    when: "'postfix' not in ansible_facts.packages"
+
+
+  - set_fact:
+      postfix_status: "{{ansible_facts.services['postfix.service']['state']}}'"
+
+
+  - name: Rename main.cf file in main-orig.cf
+    command: mv {{destin_folder}}/main.cf {{destin_folder}}/main-orig.cf
+#    when: postfix_status == 'stopped'
+
+
+  - block:
+
+    - name: Copy new postfix config file
+      template: src={{ source_folder }}/main.j2 dest={{ destin_folder }}/main.cf mode=0644
+
+    - name: Copy password file
+      copy:
+        src: "{{ source_folder }}/sasl_passwd"
+        dest: "{{ destin_folder }}/sasl_passwd"
+        mode: 0644
+
+    - name: Generate password
+      shell: |
+        postmap /etc/postfix/sasl_passwd
+        rm -f /etc/postfix/sasl_passwd
+
+      notify: Restart postfix
+#    when: postfix_status == 'stopped'
+
+
+  - name: Send Test message
+    command: "echo 'Test ' | mail -s 'Disk usage' admin@ks.rniirs.ru"
+
+
+  - name: Install fail2ban
+    yum:
+      name: fail2ban
+      state: latest
+
+  - name: Enable fail2ban
+    shell: |
+      systemctl enable fail2ban
+      systemctl start fail2ban
+
+  - name: Copy fail2ban config file
+    copy:
+      src: "{{ source_folder }}/jail.local"
+      dest: /etc/fail2ban/jail.local
+      mode: 0644
+    notify: Restart fail2ban
+
+
+
+  handlers:
+    - name: Restart postfix
+      service: name=postfix state=restarted
+
+    - name: Restart fail2ban
+      service: name=fail2ban state=restarted
+
+
+
+
+
+
+#  - name: "Postfix stat"
+#    command: systemctl status postfix
+#    register: postfix_status
+#    failed_when: postfix_status.rc > 3
+
+
+#  - debug: var=postfix_status.stdout

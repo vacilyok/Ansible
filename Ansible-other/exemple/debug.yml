@@ -1,0 +1,20 @@
+---
+- name: Backup Switch config
+  hosts: switch1210
+  gather_facts: false
+  connection: network_cli
+
+
+  tasks:
+    - name: Display name
+      debug:
+        msg: "os name "
+
+    - name: Test
+      cli_command: 
+        command: "show switch"
+      register: result
+
+    - name: Print result
+      debug:
+        msg: "res = {{ result }}"

@@ -1,0 +1,22 @@
+---
+- name: Install rsyslog
+  hosts: test
+  become: true
+
+  vars:
+    source_folder: /Ansible/rsyslog
+    destin_folder: /etc/rsyslog.d
+
+  tasks:
+  - name: Copy config file
+    copy:
+      src: "{{ source_folder }}/90-graylog2.conf"
+      dest: "{{ destin_folder }}/90-graylog2.conf"
+      mode: 0644  
+    notify: Restart rsyslog
+  
+  
+  handlers:
+    - name: Restart rsyslog
+      service: name=rsyslog state=restarted
+

@@ -1,0 +1,7 @@
+---
+- name: Upgrade all packages
+  hosts: web_update
+
+  tasks:
+  - name: Upgrade
+    yum: name="*" state=latest

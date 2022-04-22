@@ -1,0 +1,23 @@
+---
+- name: Revision
+  hosts: test_switch
+  connection: network_cli
+  gather_facts: false
+
+  tasks:
+  - name: Search revision
+    cli_command:
+      command: show switch
+    register: result
+  - set_fact:
+#      switch_revision: "{{result.stdout | regex_search('System hardware version           : (\\S+)', '\\1') | first}}"
+      switch_revision: "{{result.stdout | regex_search('System hardware version\\s+:(\\S+)', '\\1')}}"
+#      switch_revision: "{{result.stdout | regex_search('System name(\\s+):(\\S+))', '\\1')}}"
+  - debug:
+      msg: "{{switch_revision}}"
+
+
+
+  - name: Display rev
+    debug:
+      msg: "{{ansible_host}}  {{switch_revision}}"

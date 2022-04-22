@@ -1,0 +1,10 @@
+---
+- name: Backup Switch config
+  hosts: switch3120
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+  - ios_command:
+      commands:
+        - command: "upload cfg_toTFTP 192.168.31.119 dest_file switch/3120/{{ansible_host}}.cfg"

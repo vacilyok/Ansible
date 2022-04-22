@@ -1,0 +1,24 @@
+---
+- name: Configure switch syslog
+  hosts: test_switch
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+  # - name: syslog for switch 1510
+  #   ios_config:
+  #     lines:
+  #       - logging server 192.168.31.132 severity 6 port 3514
+
+
+  - name: configure syslog for switch 1510
+    ios_command:
+      commands:
+        - command: 'configure terminal'
+        - command: 'logging server 192.168.31.132 severity 6 port 3514'
+        - command: 'exit'
+        - command: 'copy running-config startup-config'
+          prompt: 'Destination filename startup-config *'
+          answer: "y"        
+
+

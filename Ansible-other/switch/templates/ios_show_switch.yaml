@@ -1,0 +1,12 @@
+---
+- name Parser data
+  parser_metadata:
+    version: 1.0
+    command: show switch
+    network_os: ios
+    
+- name MATCH PATTERN
+  pattern_match:
+    regex: "^"
+    match_all: yes
+  register: section

@@ -1,0 +1,18 @@
+---
+- name: Backup Switch config
+  hosts: switch1510
+  gather_facts: false
+  connection: network_cli
+
+
+  tasks:
+  - ios_command:
+      commands:
+        - command: "copy running-config tftp: //192.168.31.119/switch/1510/{{ansible_host}}.cfg"
+          check_all: True
+          prompt:
+            - "Address of remote host [192.168.31.119]?"
+            - "Destination filename .*"
+          answer:
+            - " "
+            - " "

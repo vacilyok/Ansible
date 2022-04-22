@@ -1,0 +1,12 @@
+---
+- name: Backup Switch config
+  hosts: sw5900
+  gather_facts: false
+  connection: network_cli
+
+
+  tasks:
+    - name: Switch 5900 backup
+      cli_command:
+        command: "system-view"
+

@@ -1,0 +1,16 @@
+---
+- name: Backup Switch config
+  hosts: sw1
+  gather_facts: false
+  connection: network_cli
+
+
+  tasks:
+    - name: Switch Test
+      cli_command: 
+        command: "show switch"
+      register: sw_info
+
+    - name: Show info
+      debug:
+        msg='{{sw_info.stdout_lines[4]}}'

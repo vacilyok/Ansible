@@ -1,0 +1,6 @@
+ansible centos7 -m shell -a "uptime"  # Выполнить команду на серверах категории centos7
+ansible all -m copy -a "src=readme.txt dest=/home mode=777" -b # скопировать файл на все сервера (-b  запуск от sudo)
+ansible all -m yum -a "name=prog state=installed" # установить пакет
+ansible all -m yum -a "name=prog state=removed" # удалить пакет
+ansible all -m service -a "name=prog state=started enable=yes" # запустить процесс
+ansible web_update -m yum -a "name=* state=latest" # обновить все пакеты

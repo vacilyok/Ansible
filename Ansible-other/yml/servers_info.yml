@@ -1,0 +1,9 @@
+
+---
+- name: Echo servers info
+  hosts: all
+
+
+  tasks:    
+  - debug:
+      var: ansible_kernel

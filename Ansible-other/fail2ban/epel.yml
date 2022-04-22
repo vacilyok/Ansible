@@ -1,0 +1,38 @@
+---
+- name: Install epel-release
+  hosts: test
+  become: yes
+
+
+  vars:
+    source_folder: ./src
+
+  tasks:
+  - name: Print OS release
+    debug: var=ansible_facts['distribution_major_version']
+
+  - name: Gather the packager facts
+    package_facts:
+
+
+  - name: Check epel install
+    debug:
+      msg: "Epel  found !!!"
+    when: "'epel-release' in ansible_facts.packages"
+
+
+  - block:
+    - name: epel install
+      yum:
+        name: epel-release
+        state: latest
+
+    - name: Copy epel file
+      copy:
+        src: "{{ source_folder }}/epel.repo"
+        dest: /etc/yum.repos.d/epel.repo
+        mode: 0644
+
+    when: "'epel-release' not in ansible_facts.packages and ansible_facts['distribution_major_version'] == '7'"
+
+

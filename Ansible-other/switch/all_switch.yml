@@ -1,0 +1,36 @@
+---
+- name: Backup Switch config
+  hosts: all
+  gather_facts: false
+  connection: network_cli
+
+
+  tasks:
+    - name: Switch 1210 backup
+      cli_command:
+        command: "upload cfg_toTFTP 192.168.31.119 switch/1210/{{ansible_host}}.cfg config_id 1"
+      when: switch1210 is defined and switch1210
+
+    - name: Switch 1210 other backup
+      cli_command:
+        command: "upload cfg_toTFTP 192.168.31.119 switch/1210/{{ansible_host}}.cfg"
+      when: switch1210_other is defined and switch1210_other
+
+
+    - name: Switch 3120 backup
+      cli_command:
+        command: "upload cfg_toTFTP 192.168.31.119 dest_file switch/3120/{{ansible_host}}.cfg"
+      when: switch3120 is defined and switch3120
+
+
+    - ios_command:
+        commands:
+          - command: "copy running-config tftp: //192.168.31.119/switch/1510/{{ansible_host}}.cfg"
+            check_all: True
+            prompt:
+              - "Address of remote host [192.168.31.119]?"
+              - "Destination filename .*"
+            answer:
+              - " "
+              - " "
+      when: switch1510 is defined and switch1510
